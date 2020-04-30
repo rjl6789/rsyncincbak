@@ -6,10 +6,10 @@
 src="/"
 user="root"
 server="hc2"
-dest="/mnt/WDred/pi_distributions/pi4"
-excl="/root/scripts/sys_bak_excludes"
+dest="/mnt/WDred/t470s_distributions"
+excl="/home/rob/.config/rsyncincbak/sys_bak_excludes"
 dt=$(date +%Y%m%d_%H%M%S)
-froot="pi4sysbackup"
+froot="t470s-arch-sysbackup"
 keep=5
 all_ok="yes"
 stage="prelim"
@@ -60,15 +60,21 @@ if filels="$(ssh $user@$server ls -d "$dest/[0-9]*-$froot-[0-9][0-9][0-9][0-9][0
 	echo "   hard linking to: $linkdir"
 	echo "   source: $src"
 	echo "   destination: $newdir"
-	rsync -aAXPh --delete --info=name1 --info=progress2 --exclude-from="$excl" --link-dest="$linkdir" "$src" "$user"@"$server":"$newdir"
-	if [ "$all_ok" == "no" ]; then
+	rsync -aAXPh --delete --delay-updates --info=name1 --info=progress2 --exclude-from="$excl" --link-dest="$linkdir" "$src" "$user"@"$server":"$newdir"
+	exit_code=$?
+	
+	if [ "$all_ok" == "no" ] || (( exit_code > 1 )); then
 		ssh "$user"@"$server" rm -rf "$newdir" 2>/dev/null
+		echo "**"
+		echo "** something has gone wrong"
 		echo "**"
 		echo "** removed rsync created directory from server"
 		echo "**"
 		echo "** now exiting"
 		exit
 	fi
+
+	
 	echo ""
 	echo "-------------------------------------"
 	echo ""
